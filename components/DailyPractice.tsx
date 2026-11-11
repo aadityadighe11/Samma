@@ -82,16 +82,26 @@ export default function DailyPractice({
         <article className="column" style={{ maxWidth: 520 }}>
           <div className="label">Lesson {lesson.number}</div>
           <h1 className="serif" style={{ fontSize: 32, fontWeight: 500, lineHeight: 1.15, margin: "8px 0 6px" }}>{lesson.title}</h1>
-          <div className="card-source" style={{ marginBottom: 26 }}>From The Art of Living · {lesson.source}</div>
+          <div className="card-source" style={{ marginBottom: 26 }}>From The Art of Living · {lesson.source} · {lesson.minutes} min</div>
 
+          <div className="label section-label">The teaching</div>
           <div className="prose">
             {lesson.teaching.map((p, i) => <p key={i}>{p}</p>)}
           </div>
+          {lesson.story && (
+            <div className="card" style={{ marginTop: 22 }}>
+              <div className="label">A story from the book</div>
+              <div className="card-title" style={{ marginTop: 6 }}>{lesson.story.title}</div>
+              <div className="card-body">{lesson.story.text}</div>
+            </div>
+          )}
+          <div className="label section-label" style={{ marginTop: 30 }}>In daily life</div>
+          <p className="prose" style={{ margin: 0 }}>{lesson.daily}</p>
           {lesson.quote && <blockquote className="quote">{lesson.quote}</blockquote>}
 
           <hr className="rule" />
 
-          <div className="label" style={{ marginBottom: 10 }}>The practice</div>
+          <div className="label section-label">The practice</div>
           <p className="serif" style={{ fontSize: 19, fontStyle: "italic", lineHeight: 1.6, margin: 0 }}>{lesson.instruction}</p>
 
           {lesson.sitSeconds && lesson.guidance && (
@@ -105,7 +115,7 @@ export default function DailyPractice({
 
           {lesson.reflection && (
             <div style={{ marginTop: 26 }}>
-              <div className="label" style={{ marginBottom: 8 }}>Reflection</div>
+              <div className="label section-label">Reflection</div>
               <p className="serif" style={{ fontSize: 19, lineHeight: 1.55, margin: "0 0 10px" }}>{lesson.reflection}</p>
               {/* Uncontrolled on purpose, and never saved: this is for the writer only. */}
               <textarea className="field" rows={3} aria-label="Reflection (not saved)" style={{ fontSize: 18 }} />

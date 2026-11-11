@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { InputCapture } from "./Shared";
 import { canSpeak, speak, stopSpeaking } from "@/lib/speech";
+import { failureMessage } from "@/lib/errors";
 
 export type TeachingCard = { id: string; title: string; source: string; gist: string; quote?: string; lessonId: string };
 
@@ -55,10 +56,7 @@ export default function Talk({
       if (!res.ok) {
         setStatus({
           name: "error",
-          message:
-            res.status === 429
-              ? "Too many people are here at this moment. Wait a minute, then try again."
-              : "The connection did not hold. What you said is still here.",
+          message: failureMessage(d?.reason, "What you said is still here."),
         });
         return;
       }

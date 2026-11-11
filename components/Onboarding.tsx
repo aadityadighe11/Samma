@@ -4,8 +4,8 @@ import { useState } from "react";
 import Tree from "./Tree";
 
 const CARDS = [
-  "Samma means right understanding. Not feeling better — seeing clearly.",
-  "When something is present — a feeling, a thought, a tension — the app helps you meet it directly. Through the body.",
+  "Samma means right understanding. Not feeling better. Seeing clearly.",
+  "When a feeling, a thought or a tension is present, the app helps you meet it directly. Through the body.",
   "Three ways in. Anchor: when you need ground right now. Talk it through: say what is troubling you and hear what the teaching says about it. Daily Practice: build the foundation over time.",
 ];
 

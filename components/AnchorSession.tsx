@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Tree from "./Tree";
 import { GuidedSit, InputCapture, TextBlock } from "./Shared";
 import { stopSpeaking } from "@/lib/speech";
+import { failureMessage } from "@/lib/errors";
 
 type Practice = {
   plan: string;
@@ -32,7 +33,7 @@ async function post(payload: unknown) {
     body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(res.status === 429 ? "busy" : data?.error || "failed");
+  if (!res.ok) throw new Error(data?.reason || "other");
   return data;
 }
 
@@ -57,12 +58,9 @@ export default function AnchorSession({
   useEffect(() => () => stopSpeaking(), []);
 
   const fail = (retry: () => void) => (err: unknown) => {
-    const busy = err instanceof Error && err.message === "busy";
     setPhase({
       name: "error",
-      message: busy
-        ? "Too many people are here at this moment. Wait a minute, then try again."
-        : "The connection did not hold. What you wrote has not been lost.",
+      message: failureMessage(err instanceof Error ? err.message : undefined, "What you wrote has not been lost."),
       retry,
     });
   };
@@ -157,7 +155,7 @@ export default function AnchorSession({
               autoSpeak
             />
             <p className="note fade-in-slow" style={{ margin: "26px auto 26px", maxWidth: 400 }}>
-              Sound on. Sit upright. Close your eyes when you begin — a voice will guide you.
+              Sound on. Sit upright. Close your eyes when you begin. A voice will guide you.
             </p>
             <button className="btn fade-in-slow" onClick={() => { stopSpeaking(); setPhase({ name: "practice", practice: phase.practice, step: 0 }); }}>
               begin the practice →

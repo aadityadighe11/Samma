@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AiError, CRISIS_MESSAGE, PHILOSOPHY, SAFETY, clip, generateJson, looksLikeCrisis } from "@/lib/gemini";
+import { AiError, CRISIS_MESSAGE, PHILOSOPHY, SAFETY, clip, generateJson, plain, reasonFor, looksLikeCrisis } from "@/lib/gemini";
 import { LESSONS_BY_ID } from "@/lib/lessons";
 
-const TURN1_PROMPT = `You are the voice of Samma — a Vipassana-rooted mindfulness app grounded in S.N. Goenka's teachings.
+const TURN1_PROMPT = `You are the voice of Samma, a Vipassana-rooted mindfulness app grounded in S.N. Goenka's teachings.
 
 ${PHILOSOPHY}
 
@@ -23,20 +23,20 @@ ${PHILOSOPHY}
 Return these fields:
 - plan: One sentence telling the user what the next three minutes will be, e.g. "For the next three minutes you will observe the tightness in the chest, then the breath, then how the sensation changes." Fit it to what they named.
 - bodyScan: A guided observation of roughly 90-110 words, targeted to the location or sensation they named. Start at the named location. Slow, precise, Goenka-cadenced. Use "bring your attention to", "notice whatever is present there", "observe without reacting".
-- breath: An ānāpāna breath anchor of roughly 90-110 words. Guide attention to the area below the nostrils, above the upper lip. Natural breath only — never instruct to breathe deeply or change the breath.
-- anicca: Roughly 60-80 words. Point to the impermanence of the specific sensation present. Not as philosophy — as direct instruction to observe its arising and passing.
+- breath: An ānāpāna breath anchor of roughly 90-110 words. Guide attention to the area below the nostrils, above the upper lip. Natural breath only, never instruct to breathe deeply or change the breath.
+- anicca: Roughly 60-80 words. Point to the impermanence of the specific sensation present. Not as philosophy, as direct instruction to observe its arising and passing.
 - teaching: 2-3 sentences from Goenka's tradition that speak directly to what was present. Not encouraging. Not comforting. True.
 - dailyPracticeLink: choose the single most relevant lesson:
-  lesson_01: The Starting Point — why we suffer (blame, reactions to external events)
-  lesson_02: Vedanā — the body is the lab (clear body sensations)
-  lesson_03: Ānāpāna — the breath as entry point (overwhelm, needing simplicity)
-  lesson_04: Sīla — the ground of practice (guilt, conflict, harm)
+  lesson_01: The Starting Point: why we suffer (blame, reactions to external events)
+  lesson_02: Vedanā: the body is the lab (clear body sensations)
+  lesson_03: Ānāpāna: the breath as entry point (overwhelm, needing simplicity)
+  lesson_04: Sīla: the ground of practice (guilt, conflict, harm)
   lesson_05: The story and the sensation (rumination, strong narrative, blame)
   lesson_06: Working with pain and resistance (physical pain, tension, resistance)
-  lesson_07: Saṅkhāra — why patterns repeat (recurring patterns)
-  lesson_08: Equanimity — observing without reacting (craving, aversion, wanting things different)
-  lesson_09: Mettā — goodwill (interpersonal conflict, grief, hard sessions)
-  lesson_10: Continuity — practice in daily life (general integration)
+  lesson_07: Saṅkhāra: why patterns repeat (recurring patterns)
+  lesson_08: Equanimity: observing without reacting (craving, aversion, wanting things different)
+  lesson_09: Mettā: goodwill (interpersonal conflict, grief, hard sessions)
+  lesson_10: Continuity: practice in daily life (general integration)
 
 Respond ONLY with valid JSON. No markdown. No backticks.
 {"plan":"...","bodyScan":"...","breath":"...","anicca":"...","teaching":"...","dailyPracticeLink":{"lessonId":"lesson_0X"}}`;
@@ -87,13 +87,13 @@ export async function POST(req: NextRequest) {
         ? MOCK1
         : await generateJson<Turn1>(TURN1_PROMPT, [{ role: "user", text: `User shared: "${userInput}"` }]);
       if (out.type === "crisis" || out.type === "soft_crisis") {
-        return NextResponse.json({ type: out.type, message: clip(out.message, 600) || CRISIS_MESSAGE });
+        return NextResponse.json({ type: out.type, message: plain(clip(out.message, 600)) || CRISIS_MESSAGE });
       }
       if (!out.reflection) throw new AiError("The model returned an incomplete reflection.");
       return NextResponse.json({
         type: "session",
-        reflection: clip(out.reflection, 600),
-        question: out.question ? clip(out.question, 300) : null,
+        reflection: plain(clip(out.reflection, 600)),
+        question: out.question ? plain(clip(out.question, 300)) : null,
       });
     }
 
@@ -114,16 +114,16 @@ export async function POST(req: NextRequest) {
     }
     const lesson = LESSONS_BY_ID[out.dailyPracticeLink?.lessonId ?? ""] ?? LESSONS_BY_ID["lesson_02"];
     return NextResponse.json({
-      plan: clip(out.plan, 400),
-      bodyScan: clip(out.bodyScan, 1500),
-      breath: clip(out.breath, 1500),
-      anicca: clip(out.anicca, 1200),
-      teaching: clip(out.teaching, 800),
+      plan: plain(clip(out.plan, 400)),
+      bodyScan: plain(clip(out.bodyScan, 1500)),
+      breath: plain(clip(out.breath, 1500)),
+      anicca: plain(clip(out.anicca, 1200)),
+      teaching: plain(clip(out.teaching, 800)),
       dailyPracticeLink: { lessonId: lesson.id, lessonTitle: lesson.title },
     });
   } catch (err) {
     const status = err instanceof AiError ? err.status : 500;
     const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message, reason: reasonFor(err) }, { status });
   }
 }

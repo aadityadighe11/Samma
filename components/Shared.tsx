@@ -142,7 +142,7 @@ export function InputCapture({
           <span />
         )}
         <span className="note" style={{ flex: 1 }} aria-live="polite">
-          {listening ? "listening — tap the square when you are done" : note}
+          {listening ? "listening... tap the square when you are done" : note}
         </span>
         <button type="button" className="btn" onClick={submit} disabled={disabled}>
           {submitLabel}

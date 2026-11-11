@@ -7,11 +7,13 @@ import {
   SAFETY,
   clip,
   generateJson,
+  plain,
+  reasonFor,
   looksLikeCrisis,
 } from "@/lib/gemini";
 import { TEACHINGS_BY_ID, teachingIndexForPrompt } from "@/lib/teachings";
 
-const TALK_PROMPT = `You are the voice of Samma — a Vipassana-rooted app grounded in S.N. Goenka's teachings as presented in "The Art of Living" (William Hart). A person has come to talk through something that is troubling them. Your job is to listen accurately, then show them what this teaching says about their exact situation.
+const TALK_PROMPT = `You are the voice of Samma, a Vipassana-rooted app grounded in S.N. Goenka's teachings as presented in "The Art of Living" (William Hart). A person has come to talk through something that is troubling them. Your job is to listen accurately, then show them what this teaching says about their exact situation.
 
 ${PHILOSOPHY}
 
@@ -19,8 +21,8 @@ ${SAFETY}
 
 HOW TO RESPOND (type "talk"):
 - reply: 3 to 6 short sentences, plain prose, no lists.
-  1. First show you understood their specific situation — use their details, not a generic summary. One sentence.
-  2. Then apply the teaching to it concretely: what, in this tradition, is actually happening in them (contact → sensation → reaction; craving; aversion; the story versus the sensation; impermanence; and so on). Make it about their case — their boss, their phone, their sleeplessness — not an abstract lecture.
+  1. First show you understood their specific situation, use their details, not a generic summary. One sentence.
+  2. Then apply the teaching to it concretely: what, in this tradition, is actually happening in them (contact → sensation → reaction; craving; aversion; the story versus the sensation; impermanence; and so on). Make it about their case, their boss, their phone, their sleeplessness, not an abstract lecture.
   3. End with one small thing to observe, or one question that turns attention to what is present in the body. Never more than one question.
 - This is a conversation. If there are earlier turns, build on them and do not repeat yourself. If they ask a direct question about the teaching, answer it directly.
 - You are not a teacher or a therapist and must not claim to be. Do not teach the full Vipassana technique; if they ask to learn it properly, say that it is taught in 10-day courses (dhamma.org) and that this app is a bridge to practice in daily life.
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest) {
       process.env.SAMMA_MOCK === "1" ? MOCK : await generateJson<TalkOut>(TALK_PROMPT, turns);
 
     if (out.type === "crisis" || out.type === "soft_crisis") {
-      return NextResponse.json({ type: out.type, message: clip(out.message, 600) || CRISIS_MESSAGE });
+      return NextResponse.json({ type: out.type, message: plain(clip(out.message, 600)) || CRISIS_MESSAGE });
     }
     if (!out.reply) throw new AiError("The model returned an empty reply.");
 
@@ -94,13 +96,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       type: "talk",
-      reply: clip(out.reply, 1800),
+      reply: plain(clip(out.reply, 1800)),
       teachings,
       suggestAnchor: out.suggestAnchor === true,
     });
   } catch (err) {
     const status = err instanceof AiError ? err.status : 500;
     const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message, reason: reasonFor(err) }, { status });
   }
 }

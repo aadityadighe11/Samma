@@ -2,7 +2,7 @@
 // to go out of date. The model is configurable because Google retires model
 // names roughly once a year (gemini-2.0-flash stopped working on 1 June 2026).
 
-const DEFAULT_MODELS = ["gemini-3.6-flash", "gemini-flash-latest"];
+const DEFAULT_MODELS = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash"];
 
 export type ChatTurn = { role: "user" | "model"; text: string };
 
@@ -70,7 +70,7 @@ export async function generateJson<T>(system: string, turns: ChatTurn[]): Promis
     const detail = await res.text().catch(() => "");
     lastError = `Gemini ${model} responded ${res.status}: ${detail.slice(0, 300)}`;
     lastStatus = res.status === 429 ? 429 : 502;
-    // A retired or unknown model name gives 404 — try the next one. Anything else is final.
+    // A retired or unknown model name gives 404, try the next one. Anything else is final.
     if (res.status !== 404) break;
   }
   console.error("[samma] " + lastError);
@@ -91,10 +91,20 @@ REQUIRED orientation: "see clearly," "observe," "notice," "what is present," "ar
 VOICE CHARACTER:
 - Measured, unhurried. No warmth-performance. No exclamation marks.
 - Speak like someone who has sat with reality long enough to speak from it, not about it.
-- Neither clinical nor therapist-warm. Plain words. Short sentences.`;
+- Neither clinical nor therapist-warm. Plain words. Short sentences.
+- Never use em dashes or en dashes. Use full stops, commas or colons instead.`;
 
-export const SAFETY = `SAFETY — check this before anything else:
-- If the message contains suicidal thoughts, intent to self-harm, intent to harm someone else, or signs of psychosis → type "crisis". The message field is 2 short sentences: acknowledge plainly that what they are carrying is heavy, and say that this needs a person, not an app — someone they trust, or a doctor, now. Do not give any practice or teaching. Do not give phone numbers.
+// Belt and braces: strip long dashes from anything the model writes.
+export function plain(text: string): string {
+  return text
+    .replace(/\s*[—–]\s*/g, ", ")
+    .replace(/,\s*,/g, ",")
+    .replace(/…/g, "...")
+    .trim();
+}
+
+export const SAFETY = `SAFETY, check this before anything else:
+- If the message contains suicidal thoughts, intent to self-harm, intent to harm someone else, or signs of psychosis → type "crisis". The message field is 2 short sentences: acknowledge plainly that what they are carrying is heavy, and say that this needs a person, not an app, someone they trust, or a doctor, now. Do not give any practice or teaching. Do not give phone numbers.
 - If there are markers of severe, lasting depression or trauma without acute danger → type "soft_crisis". The message field is 2-3 short sentences: say plainly that this deserves the support of a qualified person, and that the practice can sit alongside that support, not replace it.
 - Never diagnose. Never give medical advice. Never tell anyone to stop medication or treatment.`;
 
@@ -121,4 +131,14 @@ export const CRISIS_MESSAGE =
 
 export function clip(value: unknown, max: number): string {
   return typeof value === "string" ? value.slice(0, max) : "";
+}
+
+// Plain-language reason for a failure, safe to show on screen.
+export function reasonFor(err: unknown): string {
+  const msg = err instanceof Error ? err.message : "";
+  if (msg.includes("GEMINI_API_KEY is not configured")) return "no_key";
+  if (/ 429/.test(msg)) return "quota";
+  if (/ 40[013]/.test(msg) || /API key not valid|API_KEY_INVALID|PERMISSION_DENIED/i.test(msg)) return "bad_key";
+  if (/ 404/.test(msg)) return "model";
+  return "other";
 }
