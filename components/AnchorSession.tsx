@@ -117,7 +117,7 @@ export default function AnchorSession({
         {phase.name === "input" && (
           <div className="fade-in">
             <p className="textblock" style={{ marginBottom: 30 }}>What is present right now?</p>
-            <InputCapture onSubmit={runTurn1} initialText={initialText} submitLabel="continue →" />
+            <InputCapture onSubmit={runTurn1} initialText={initialText} placeholder="Type here, or tap the mic" submitLabel="continue →" />
             <p className="note" style={{ marginTop: 22 }}>Type or speak. A sentence is enough. Nothing is saved.</p>
           </div>
         )}
@@ -136,7 +136,7 @@ export default function AnchorSession({
               {phase.question ? (
                 <InputCapture
                   onSubmit={(answer) => runTurn2(userInput, phase.reflection, answer)}
-                  placeholder="chest, throat, stomach, jaw…"
+                  placeholder="chest, throat, stomach..."
                   submitLabel="continue →"
                 />
               ) : (

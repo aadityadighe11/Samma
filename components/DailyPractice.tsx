@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { LESSONS, LESSONS_BY_ID, Lesson } from "@/lib/lessons";
-import { GuidedSit } from "./Shared";
+import { GuidedSit, autoGrow } from "./Shared";
 import { speak } from "@/lib/speech";
 
 const KEY = "samma_lessons_complete";
@@ -118,7 +118,7 @@ export default function DailyPractice({
               <div className="label section-label">Reflection</div>
               <p className="serif" style={{ fontSize: 19, lineHeight: 1.55, margin: "0 0 10px" }}>{lesson.reflection}</p>
               {/* Uncontrolled on purpose, and never saved: this is for the writer only. */}
-              <textarea className="field" rows={3} aria-label="Reflection (not saved)" style={{ fontSize: 18 }} />
+              <textarea className="field" rows={1} aria-label="Reflection (not saved)" placeholder="Write here" onInput={(e) => autoGrow(e.currentTarget)} />
               <p className="note" style={{ marginTop: 6 }}>Not saved anywhere. Writing it is the point.</p>
             </div>
           )}
@@ -175,6 +175,11 @@ Ten short lessons, in the order of a Vipassana course. Each one opens the next.
             </button>
           ))}
         </div>
+        {nextIndex !== -1 && LESSONS.length - visible.length > 0 && (
+          <p className="note" style={{ marginTop: 16 }}>
+            {LESSONS.length - visible.length} more open as you complete each one.
+          </p>
+        )}
         {nextIndex === -1 && (
           <p className="note" style={{ marginTop: 20 }}>All ten are open. They are meant to be returned to.</p>
         )}

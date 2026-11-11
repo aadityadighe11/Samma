@@ -38,8 +38,24 @@ export default function Page() {
   const go = (next: Screen) => {
     stopSpeaking();
     window.scrollTo(0, 0);
+    // Give the browser's Back button somewhere to go inside the app.
+    if (next.name !== "home" && screen.name === "home") {
+      try {
+        window.history.pushState({ samma: true }, "");
+      } catch {}
+    }
     setScreen(next);
   };
+
+  useEffect(() => {
+    const onBack = () => {
+      stopSpeaking();
+      window.scrollTo(0, 0);
+      setScreen((s) => (s.name === "boot" || s.name === "onboarding" ? s : { name: "home" }));
+    };
+    window.addEventListener("popstate", onBack);
+    return () => window.removeEventListener("popstate", onBack);
+  }, []);
   const home = () => go({ name: "home" });
   const openLesson = (lessonId: string) => go({ name: "daily-practice", lessonId, key: Date.now() });
 

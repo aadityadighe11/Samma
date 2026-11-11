@@ -163,7 +163,7 @@ export default function Talk({
             <InputCapture
               onSubmit={(text) => send([...thread, { role: "user", text }])}
               submitLabel={thread.length ? "say more →" : "continue →"}
-              placeholder={thread.length ? "Say more, or ask about what you just read…" : ""}
+              placeholder={thread.length ? "Say more, or ask a question" : "Type here, or tap the mic"}
               clearOnSubmit
             />
           </div>

@@ -27,6 +27,14 @@ export function TextBlock({ text, autoSpeak = false }: { text: string; autoSpeak
   return <p className="textblock teaching-enter">{text}</p>;
 }
 
+// Grows a textarea to fit its text: one line when empty, up to a limit.
+export function autoGrow(el: HTMLTextAreaElement) {
+  el.style.height = "auto";
+  const h = Math.min(Math.max(el.scrollHeight, 42), 320);
+  el.style.height = h + "px";
+  el.style.overflowY = el.scrollHeight > 320 ? "auto" : "hidden";
+}
+
 // ---------- InputCapture: type or speak ----------
 // The textarea is deliberately UNCONTROLLED (ref, no value/onChange state).
 // A controlled textarea here caused the "screen refreshes on every letter" bug.
@@ -56,10 +64,13 @@ export function InputCapture({
 
   const grow = () => {
     const el = ref.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 320) + "px";
+    if (el) autoGrow(el);
   };
+
+  // Size correctly when the box opens with text already in it.
+  useEffect(() => {
+    if (ref.current) autoGrow(ref.current);
+  }, []);
 
   const toggleMic = () => {
     if (listening) {
@@ -97,7 +108,13 @@ export function InputCapture({
 
   const submit = () => {
     const text = ref.current?.value.trim() ?? "";
-    if (!text || disabled) return;
+    if (disabled) return;
+    if (!text) {
+      setNote("Write or say something first.");
+      ref.current?.focus();
+      return;
+    }
+    setNote("");
     listener.current?.stop();
     if (clearOnSubmit && ref.current) {
       ref.current.value = "";
@@ -114,10 +131,19 @@ export function InputCapture({
         defaultValue={initialText}
         placeholder={placeholder}
         aria-label={placeholder || "Write here"}
-        rows={3}
-        onInput={grow}
+        rows={1}
+        onInput={() => {
+          grow();
+          if (note) setNote("");
+        }}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
+          // On a keyboard, Enter sends and Shift+Enter makes a new line.
+          // On a phone, Enter makes a new line and the button sends.
+          const touch = window.matchMedia?.("(pointer: coarse)").matches;
+          if (e.key === "Enter" && !e.shiftKey && !touch && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            submit();
+          }
         }}
       />
       <div className="input-row">
