@@ -3,7 +3,12 @@
 // Voice output (browser text-to-speech) and voice input (browser speech
 // recognition). Both are optional: every caller must work when they are absent.
 
-const PREFERRED_VOICES = ["Daniel", "Samantha", "Google UK English Male", "Karen", "Rishi", "Google UK English Female"];
+// Indian English first. Names differ by device: Neerja/Prabhat (Edge), Heera/Ravi
+// (Windows), Rishi/Veena (Apple). Android exposes Indian voices by language only.
+const INDIAN_NAMES = ["Neerja", "Prabhat", "Rishi", "Veena", "Heera", "Ravi"];
+const FALLBACK_NAMES = ["Daniel", "Google UK English Male", "Google UK English Female", "Samantha", "Karen"];
+
+const isIndianEnglish = (v: SpeechSynthesisVoice) => v.lang?.replace("_", "-").toLowerCase() === "en-in";
 
 let cachedVoice: SpeechSynthesisVoice | null = null;
 let runId = 0;
@@ -19,7 +24,15 @@ function pickVoice(): SpeechSynthesisVoice | null {
   if (cachedVoice) return cachedVoice;
   const voices = s.getVoices();
   if (!voices.length) return null;
-  for (const name of PREFERRED_VOICES) {
+  const indian = voices.filter((v) => isIndianEnglish(v) || INDIAN_NAMES.some((n) => v.name.includes(n) && v.lang?.startsWith("en")));
+  if (indian.length) {
+    cachedVoice =
+      indian.find((v) => /natural/i.test(v.name)) ??
+      indian.find((v) => INDIAN_NAMES.some((n) => v.name.includes(n))) ??
+      indian[0];
+    return cachedVoice;
+  }
+  for (const name of FALLBACK_NAMES) {
     const v = voices.find((x) => x.name.includes(name));
     if (v) return (cachedVoice = v);
   }
@@ -74,6 +87,8 @@ export function speak(text: string, opts: { gapMs?: number; onDone?: () => void 
     if (v) {
       u.voice = v;
       u.lang = v.lang;
+    } else {
+      u.lang = "en-IN";
     }
     u.rate = 0.82;
     u.pitch = 0.95;

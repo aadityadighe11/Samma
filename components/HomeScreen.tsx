@@ -21,7 +21,7 @@ export default function HomeScreen({ onAnchor, onTalk, onDaily }: Props) {
           </svg>
           <span>
             <span className="tile-title" style={{ display: "block" }}>Anchor</span>
-            <span className="tile-sub" style={{ display: "block" }}>Find ground when you need it. A three-minute guided observation.</span>
+            <span className="tile-sub" style={{ display: "block" }}>Find ground when you need it.</span>
           </span>
         </button>
         <button className="tile" onClick={onTalk}>
@@ -31,7 +31,7 @@ export default function HomeScreen({ onAnchor, onTalk, onDaily }: Props) {
           </svg>
           <span>
             <span className="tile-title" style={{ display: "block" }}>Talk it through</span>
-            <span className="tile-sub" style={{ display: "block" }}>Say or type what is troubling you. Hear what the teaching says about it.</span>
+            <span className="tile-sub" style={{ display: "block" }}>Say what is troubling you. Hear what the teaching says.</span>
           </span>
         </button>
         <button className="tile" onClick={onDaily}>
@@ -41,7 +41,7 @@ export default function HomeScreen({ onAnchor, onTalk, onDaily }: Props) {
           </svg>
           <span>
             <span className="tile-title" style={{ display: "block" }}>Daily Practice</span>
-            <span className="tile-sub" style={{ display: "block" }}>Ten short lessons, one step at a time.</span>
+            <span className="tile-sub" style={{ display: "block" }}>Ten short lessons, one at a time.</span>
           </span>
         </button>
       </nav>

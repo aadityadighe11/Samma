@@ -152,31 +152,6 @@ export function InputCapture({
   );
 }
 
-// ---------- CrisisCard ----------
-
-export function CrisisCard() {
-  const rows: [string, string, string][] = [
-    ["Tele-MANAS (Govt. of India, free, 24×7)", "14416", "tel:14416"],
-    ["iCall (TISS)", "9152987821", "tel:+919152987821"],
-    ["Vandrevala Foundation (24×7)", "+91 9999 666 555", "tel:+919999666555"],
-    ["Emergency", "112", "tel:112"],
-  ];
-  return (
-    <div className="card" style={{ marginTop: 28, textAlign: "left" }}>
-      <div className="label" style={{ marginBottom: 10 }}>People you can reach now · India</div>
-      {rows.map(([name, num, href]) => (
-        <div key={name} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "9px 0", borderTop: "1px solid var(--mist)", fontSize: 15 }}>
-          <span>{name}</span>
-          <a href={href} style={{ fontWeight: 400, whiteSpace: "nowrap" }}>{num}</a>
-        </div>
-      ))}
-      <p className="note" style={{ margin: "12px 0 0" }}>
-        Outside India, call your local emergency number or see findahelpline.com.
-      </p>
-    </div>
-  );
-}
-
 // ---------- GuidedSit: full-screen, voice-led, eyes closed ----------
 
 export function GuidedSit({

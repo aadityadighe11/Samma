@@ -94,7 +94,7 @@ VOICE CHARACTER:
 - Neither clinical nor therapist-warm. Plain words. Short sentences.`;
 
 export const SAFETY = `SAFETY — check this before anything else:
-- If the message contains suicidal thoughts, intent to self-harm, intent to harm someone else, or signs of psychosis → type "crisis". The message field is 2 short sentences: acknowledge plainly that what they are carrying is heavy, and say that this needs a person, not an app. Do not give any practice or teaching.
+- If the message contains suicidal thoughts, intent to self-harm, intent to harm someone else, or signs of psychosis → type "crisis". The message field is 2 short sentences: acknowledge plainly that what they are carrying is heavy, and say that this needs a person, not an app — someone they trust, or a doctor, now. Do not give any practice or teaching. Do not give phone numbers.
 - If there are markers of severe, lasting depression or trauma without acute danger → type "soft_crisis". The message field is 2-3 short sentences: say plainly that this deserves the support of a qualified person, and that the practice can sit alongside that support, not replace it.
 - Never diagnose. Never give medical advice. Never tell anyone to stop medication or treatment.`;
 
@@ -117,7 +117,7 @@ export function looksLikeCrisis(text: string): boolean {
 }
 
 export const CRISIS_MESSAGE =
-  "What you are carrying is heavy, and it needs a person, not an app. Please reach one of the people below now.";
+  "What you are carrying is heavy, and it needs a person, not an app. Please reach someone you trust, or a doctor, now.";
 
 export function clip(value: unknown, max: number): string {
   return typeof value === "string" ? value.slice(0, max) : "";

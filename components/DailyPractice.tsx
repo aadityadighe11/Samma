@@ -98,7 +98,7 @@ export default function DailyPractice({
               <button className="btn" onClick={() => setSitting(true)}>
                 {sat ? "sit again" : `begin the sit · ${Math.round(lesson.sitSeconds / 60)} min`}
               </button>
-              <p className="note" style={{ marginTop: 10 }}>A voice guides the first minute, then leaves you with it. Sound on, eyes closed.</p>
+              <p className="note" style={{ marginTop: 10 }}>Sound on, eyes closed.</p>
             </div>
           )}
 
@@ -152,7 +152,7 @@ export default function DailyPractice({
       </div>
       <div className="column">
         <p className="serif" style={{ fontSize: 21, lineHeight: 1.55, margin: "6px 0 22px" }}>
-          Ten lessons that follow the order of a Vipassana course, each five to seven minutes. One opens after the one before it.
+Ten short lessons, in the order of a Vipassana course. Each one opens the next.
         </p>
         <div>
           {visible.map((l) => (

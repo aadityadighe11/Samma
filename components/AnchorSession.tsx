@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Tree from "./Tree";
-import { CrisisCard, GuidedSit, InputCapture, TextBlock } from "./Shared";
+import { GuidedSit, InputCapture, TextBlock } from "./Shared";
 import { stopSpeaking } from "@/lib/speech";
 
 type Practice = {
@@ -120,9 +120,7 @@ export default function AnchorSession({
           <div className="fade-in">
             <p className="textblock" style={{ marginBottom: 30 }}>What is present right now?</p>
             <InputCapture onSubmit={runTurn1} initialText={initialText} submitLabel="continue →" />
-            <p className="note" style={{ marginTop: 22 }}>
-              Say it as it is. A sentence is enough. Nothing is saved; your words are sent to an AI model only to shape the guidance.
-            </p>
+            <p className="note" style={{ marginTop: 22 }}>Type or speak. A sentence is enough. Nothing is saved.</p>
           </div>
         )}
 
@@ -159,7 +157,7 @@ export default function AnchorSession({
               autoSpeak
             />
             <p className="note fade-in-slow" style={{ margin: "26px auto 26px", maxWidth: 400 }}>
-              Sit however you can, back upright. Turn the sound on. When you begin, close your eyes — a voice will guide you. You do not need to look at the screen.
+              Sound on. Sit upright. Close your eyes when you begin — a voice will guide you.
             </p>
             <button className="btn fade-in-slow" onClick={() => { stopSpeaking(); setPhase({ name: "practice", practice: phase.practice, step: 0 }); }}>
               begin the practice →
@@ -185,7 +183,6 @@ export default function AnchorSession({
         {(phase.name === "crisis" || phase.name === "soft_crisis") && (
           <div className="fade-in">
             <p className="textblock">{phase.message}</p>
-            <CrisisCard />
             <div style={{ textAlign: "center", marginTop: 24 }}>
               <button className="quiet" onClick={onHome}>← return</button>
             </div>
