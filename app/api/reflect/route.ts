@@ -1,77 +1,129 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { AiError, CRISIS_MESSAGE, PHILOSOPHY, SAFETY, clip, generateJson, looksLikeCrisis } from "@/lib/gemini";
+import { LESSONS_BY_ID } from "@/lib/lessons";
 
-const SYSTEM_PROMPT = `You are the voice of a Vipassana-rooted mindfulness app called Samma. Your role is not to comfort the user or fix their problem. Your role is to direct their attention to direct experience — specifically, to bodily sensation as it is present right now.
+const TURN1_PROMPT = `You are the voice of Samma — a Vipassana-rooted mindfulness app grounded in S.N. Goenka's teachings.
 
-You operate within the philosophy of S.N. Goenka's Vipassana:
-- Sensation (vedanā) is always the entry point — not thoughts, not the story
-- Equanimity means observing without reacting — not suppressing, not indulging
-- Anicca (impermanence) is experienced, not explained
-- You NEVER say: feel better, relax, let go, release, fix, calm down, amazing, great job
-- You DO say: observe, notice, what is present, arising and passing
+${PHILOSOPHY}
 
-SAFETY FIRST: Before doing anything else, scan the user's input for crisis signals. If you detect suicidal ideation, self-harm intent, psychotic symptoms, or threat to harm another — respond with the crisis JSON format below.
+${SAFETY}
 
-Respond in JSON format only. No markdown. No extra text.
+For type "session":
+- reflection: 1-2 sentences naming the sensation-layer beneath their story. Not the story. Not comfort. The body. Show that you understood their specific situation.
+- question: One question that brings attention to body sensation ("Where in the body is this felt right now?" in words fitted to what they said). If the user already named a body location or sensation, set to null.
 
-For a NORMAL session, respond with this exact JSON:
-{
-  "type": "session",
-  "step2_reflection": "1-2 sentences naming the sensation-layer beneath their story",
-  "step3_question": "one body-grounding question, or null if they already named body sensation",
-  "phaseA_scan": "30-40 second body scan script, targeted or general",
-  "phaseB_breath": "30-40 second anapana breathing anchor script",
-  "phaseC_anicca": "30 second anicca reframe, matched to what was present",
-  "teaching": "a relevant Goenka or Vipassana teaching (1-3 sentences max)",
-  "anthology_tag": "10-word contextual tag for this teaching surfacing"
-}
+Respond ONLY with valid JSON. No markdown. No backticks. No preamble.
+{"type":"session","reflection":"...","question":"..." or null}
+or {"type":"crisis","message":"..."} or {"type":"soft_crisis","message":"..."}`;
 
-For a CRISIS signal (categories 1-4: suicidal ideation, self-harm, psychotic symptoms, threat to others):
-{
-  "type": "crisis",
-  "message": "What you just shared matters — more than this session. I'm not the right place to hold this. Please reach out to someone who can actually be with you right now."
-}
+const TURN2_PROMPT = `You are continuing a Samma session. The user has shared what is present and answered a grounding question. Now generate the complete guided practice. It will be read aloud slowly by a voice while the user sits with eyes closed, so write for the ear: short sentences, one instruction at a time.
 
-For severe depression markers (category 5: hopelessness, functional collapse, anhedonia) without acute crisis:
-{
-  "type": "soft_crisis",
-  "message": "1-2 warm sentences acknowledging what was shared, gently naming that what's present may be beyond what a 2-minute anchor can hold, and that speaking with someone trained in this would be worth considering"
-}
+${PHILOSOPHY}
 
-Tone calibration:
-- User sounds distressed/overwhelmed → warmer, slower cadence, fewer words
-- User sounds grounded/reflective → crisper, more direct
-- User sounds flat/dissociated → gently curious, no urgency`;
+Return these fields:
+- plan: One sentence telling the user what the next three minutes will be, e.g. "For the next three minutes you will observe the tightness in the chest, then the breath, then how the sensation changes." Fit it to what they named.
+- bodyScan: A guided observation of roughly 90-110 words, targeted to the location or sensation they named. Start at the named location. Slow, precise, Goenka-cadenced. Use "bring your attention to", "notice whatever is present there", "observe without reacting".
+- breath: An ānāpāna breath anchor of roughly 90-110 words. Guide attention to the area below the nostrils, above the upper lip. Natural breath only — never instruct to breathe deeply or change the breath.
+- anicca: Roughly 60-80 words. Point to the impermanence of the specific sensation present. Not as philosophy — as direct instruction to observe its arising and passing.
+- teaching: 2-3 sentences from Goenka's tradition that speak directly to what was present. Not encouraging. Not comforting. True.
+- dailyPracticeLink: choose the single most relevant lesson:
+  lesson_01: The Starting Point — why we suffer (blame, reactions to external events)
+  lesson_02: Vedanā — the body is the lab (clear body sensations)
+  lesson_03: Ānāpāna — the breath as entry point (overwhelm, needing simplicity)
+  lesson_04: Sīla — the ground of practice (guilt, conflict, harm)
+  lesson_05: The story and the sensation (rumination, strong narrative, blame)
+  lesson_06: Working with pain and resistance (physical pain, tension, resistance)
+  lesson_07: Saṅkhāra — why patterns repeat (recurring patterns)
+  lesson_08: Equanimity — observing without reacting (craving, aversion, wanting things different)
+  lesson_09: Mettā — goodwill (interpersonal conflict, grief, hard sessions)
+  lesson_10: Continuity — practice in daily life (general integration)
+
+Respond ONLY with valid JSON. No markdown. No backticks.
+{"plan":"...","bodyScan":"...","breath":"...","anicca":"...","teaching":"...","dailyPracticeLink":{"lessonId":"lesson_0X"}}`;
+
+type Turn1 = { type?: string; reflection?: string; question?: string | null; message?: string };
+type Turn2 = {
+  plan?: string;
+  bodyScan?: string;
+  breath?: string;
+  anicca?: string;
+  teaching?: string;
+  dailyPracticeLink?: { lessonId?: string };
+};
+
+const MOCK1: Turn1 = {
+  type: "session",
+  reflection:
+    "Beneath the account of what happened, something is active in the body right now. That is where this can be seen clearly.",
+  question: "Where in the body is this felt most strongly at this moment?",
+};
+const MOCK2: Turn2 = {
+  plan: "For the next three minutes you will observe the sensation you named, then the breath, then how the sensation changes.",
+  bodyScan:
+    "Bring your attention to the place you named. Notice whatever is present there. Do not try to change it. Observe its edges. Observe its texture.",
+  breath:
+    "Now bring attention to the area below the nostrils, above the upper lip. Feel the breath entering. Feel the breath leaving. Do not change it.",
+  anicca: "Return to the sensation. Is it the same as it was? Observe it arising. Observe it passing.",
+  teaching:
+    "The event is over. What remains is sensation, and the habit of reacting to it. Observed without reaction, it changes.",
+  dailyPracticeLink: { lessonId: "lesson_05" },
+};
 
 export async function POST(req: NextRequest) {
   try {
-    const { userInput, hasBodyInfo } = await req.json();
+    const body = await req.json();
+    const turn = body?.turn === 2 ? 2 : 1;
+    const userInput = clip(body?.userInput, 4000).trim();
+    if (!userInput) return NextResponse.json({ error: "Nothing was shared." }, { status: 400 });
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "API key not configured" }, { status: 500 });
+    if (looksLikeCrisis(userInput) || looksLikeCrisis(clip(body?.questionAnswer, 2000))) {
+      return NextResponse.json({ type: "crisis", message: CRISIS_MESSAGE });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const mock = process.env.SAMMA_MOCK === "1";
 
-    const prompt = `${SYSTEM_PROMPT}
+    if (turn === 1) {
+      const out = mock
+        ? MOCK1
+        : await generateJson<Turn1>(TURN1_PROMPT, [{ role: "user", text: `User shared: "${userInput}"` }]);
+      if (out.type === "crisis" || out.type === "soft_crisis") {
+        return NextResponse.json({ type: out.type, message: clip(out.message, 600) || CRISIS_MESSAGE });
+      }
+      if (!out.reflection) throw new AiError("The model returned an incomplete reflection.");
+      return NextResponse.json({
+        type: "session",
+        reflection: clip(out.reflection, 600),
+        question: out.question ? clip(out.question, 300) : null,
+      });
+    }
 
-User's input: "${userInput}"
-Has body information already: ${hasBodyInfo}
-
-Respond with valid JSON only.`;
-
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-
-    // Clean any markdown code fences
-    const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(cleaned);
-
-    return NextResponse.json(parsed);
+    const reflection = clip(body?.reflection, 600);
+    const questionAnswer = clip(body?.questionAnswer, 2000).trim();
+    const out = mock
+      ? MOCK2
+      : await generateJson<Turn2>(TURN2_PROMPT, [
+          {
+            role: "user",
+            text: `User originally shared: "${userInput}"\nYour reflection was: "${reflection}"\nWhen asked where this lives in the body, they said: "${
+              questionAnswer || "(they had already named a body sensation)"
+            }"`,
+          },
+        ]);
+    if (!out.bodyScan || !out.breath || !out.anicca || !out.teaching) {
+      throw new AiError("The model returned an incomplete practice.");
+    }
+    const lesson = LESSONS_BY_ID[out.dailyPracticeLink?.lessonId ?? ""] ?? LESSONS_BY_ID["lesson_02"];
+    return NextResponse.json({
+      plan: clip(out.plan, 400),
+      bodyScan: clip(out.bodyScan, 1500),
+      breath: clip(out.breath, 1500),
+      anicca: clip(out.anicca, 1200),
+      teaching: clip(out.teaching, 800),
+      dailyPracticeLink: { lessonId: lesson.id, lessonTitle: lesson.title },
+    });
   } catch (err) {
-    console.error("Gemini error:", err);
-    return NextResponse.json({ error: "Failed to process" }, { status: 500 });
+    const status = err instanceof AiError ? err.status : 500;
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status });
   }
 }
