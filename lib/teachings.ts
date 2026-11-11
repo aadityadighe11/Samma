@@ -10,6 +10,10 @@ export type Teaching = {
   title: string;
   source: string;
   gist: string;
+  // Optional exact passage from the book. Add a line like
+  //   quote: "…",
+  // to any entry below and it appears on that teaching's card.
+  quote?: string;
   lessonId: string;
   themes: string;
 };

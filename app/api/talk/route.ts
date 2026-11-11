@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       .map((id) => TEACHINGS_BY_ID[id])
       .filter(Boolean)
       .slice(0, 2)
-      .map((t) => ({ id: t.id, title: t.title, source: t.source, gist: t.gist, lessonId: t.lessonId }));
+      .map((t) => ({ id: t.id, title: t.title, source: t.source, gist: t.gist, quote: t.quote, lessonId: t.lessonId }));
 
     return NextResponse.json({
       type: "talk",

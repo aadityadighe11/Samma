@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { InputCapture } from "./Shared";
 import { canSpeak, speak, stopSpeaking } from "@/lib/speech";
 
-export type TeachingCard = { id: string; title: string; source: string; gist: string; lessonId: string };
+export type TeachingCard = { id: string; title: string; source: string; gist: string; quote?: string; lessonId: string };
 
 export type TalkTurn =
   | { role: "user"; text: string }
@@ -129,6 +129,7 @@ export default function Talk({
                   <div className="card-title">{c.title}</div>
                   <div className="card-source">The Art of Living · {c.source}</div>
                   <div className="card-body">{c.gist}</div>
+                  {c.quote && <blockquote className="quote">{c.quote}</blockquote>}
                   <button className="card-link" onClick={() => onOpenLesson(c.lessonId)}>practise this in Daily Practice →</button>
                 </div>
               ))}

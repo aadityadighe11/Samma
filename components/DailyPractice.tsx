@@ -87,6 +87,7 @@ export default function DailyPractice({
           <div className="prose">
             {lesson.teaching.map((p, i) => <p key={i}>{p}</p>)}
           </div>
+          {lesson.quote && <blockquote className="quote">{lesson.quote}</blockquote>}
 
           <hr className="rule" />
 

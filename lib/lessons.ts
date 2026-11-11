@@ -9,6 +9,10 @@ export type Lesson = {
   minutes: number;
   source: string;
   teaching: string[];
+  // Optional exact passage from the book, shown under the teaching. Add
+  //   quote: "…",
+  // to any lesson below.
+  quote?: string;
   instruction: string;
   sitSeconds?: number;
   guidance?: string;

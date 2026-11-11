@@ -190,3 +190,5 @@ a { color: inherit; }
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: var(--fog); }
 ::-webkit-scrollbar-thumb { background: var(--sky); border-radius: 2px; }
+
+.quote { margin: 14px 0 0; padding: 2px 0 2px 14px; border-left: 2px solid var(--bark); font-family: var(--serif); font-style: italic; font-size: 18px; line-height: 1.55; }
